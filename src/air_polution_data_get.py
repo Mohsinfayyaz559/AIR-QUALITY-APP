@@ -4,6 +4,7 @@ import requests
 import json
 import os
 from datetime import datetime, timezone
+from dotenv import load_dotenv
 
 
 def get_cordinates(city_name, key):
@@ -120,7 +121,9 @@ def get_history_data(city_name,start_date,end_date,key):
         print(f"Error {response.status_code}: {response.text}")
 
 
-
-get_history_data("rawalpindi", "2022-01-01", "2022-12-31", "c2d947c816991fb95a2c2895de5d10b3")
+# Fetching the API Key
+load_dotenv()
+api_key = os.getenv(API_KEY)
+get_history_data("rawalpindi", "2022-01-01", "2022-12-31", api_key)
 
 
