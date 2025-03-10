@@ -120,10 +120,10 @@ def get_history_data(city_name,start_date,end_date,key):
     else:
         print(f"Error {response.status_code}: {response.text}")
 
-
-# Fetching the API Key
-load_dotenv()
-api_key = os.getenv(API_KEY)
-get_history_data("rawalpindi", "2022-01-01", "2022-12-31", api_key)
+if __name__ == '__main__':
+    # Fetching the API Key
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+    get_history_data("rawalpindi", "2022-01-01", "2022-12-31", api_key)
 
 
