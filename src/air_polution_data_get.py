@@ -52,7 +52,7 @@ def get_latest_data(city_name, key):
         # Convert to DataFrame
         df = pd.DataFrame([{
             "Timestamp": readable_time,
-            "AQI": entry["main"]["aqi"],
+            "AQI": pollution_data["main"]["aqi"],
             "CO": components["co"],
             "NO": components["no"],
             "NO2": components["no2"],
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     parser.add_argument("city_name", type=str, help="City name")
     parser.add_argument("start_date", type=str, help="Start date in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format")
     parser.add_argument("end_date", type=str, help="End date in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format") 
-    parser.add_argument("mode", type=str, help="enter save to save to csv file or data to return data") 
+    parser.add_argument("mode", type=str, help="enter save to save to csv file or display to return data") 
     args = parser.parse_args()
     print(get_history_data(args.city_name,args.start_date, args.end_date,api_key,args.mode))
 
