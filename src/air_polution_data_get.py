@@ -5,6 +5,7 @@ import json
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+import argparse
 
 
 def get_cordinates(city_name, key):
@@ -50,6 +51,8 @@ def get_latest_data(city_name, key):
     
         # Convert to DataFrame
         df = pd.DataFrame([{
+            "Timestamp": readable_time,
+            "AQI": entry["main"]["aqi"],
             "CO": components["co"],
             "NO": components["no"],
             "NO2": components["no2"],
@@ -57,9 +60,7 @@ def get_latest_data(city_name, key):
             "SO2": components["so2"],
             "PM2.5": components["pm2_5"],
             "PM10": components["pm10"],
-            "NH3": components["nh3"],
-            "AQI": pollution_data["main"]["aqi"],
-            "Timestamp": readable_time
+            "NH3": components["nh3"]
             }])
         return df
 
@@ -67,7 +68,7 @@ def get_latest_data(city_name, key):
         print(f"Error {response.status_code}: {response.text}")
 
 
-def get_history_data(city_name,start_date,end_date,key):
+def get_history_data(city_name,start_date,end_date,key,mode="save"):
     """
     This function will take the city name as input and return the historic air polution data of the city
     """
@@ -75,10 +76,11 @@ def get_history_data(city_name,start_date,end_date,key):
     latitude, longitude = get_cordinates(city_name, key)
 
     # Convert to UNIX timestamp
-    start_date = f"{start_date} 00:00:00"
-    end_date = f"{end_date} 23:59:59"
-    start_timestamp = int(datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp())
-    end_timestamp = int(datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp())
+    if len(start_date) < 11 and len(end_date) <11 :
+        start_date = f"{start_date}T00:00:00"
+        end_date = f"{end_date}T23:59:59"
+    start_timestamp = int(datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).timestamp())
+    end_timestamp = int(datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).timestamp())
 
     url = f"http://api.openweathermap.org/data/2.5/air_pollution/history?lat={latitude}&lon={longitude}&start={start_timestamp}&end={end_timestamp}&appid={key}"
 
@@ -96,6 +98,8 @@ def get_history_data(city_name,start_date,end_date,key):
             readable_time = datetime.fromtimestamp(entry["dt"], timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             
             records.append({
+                "Timestamp": readable_time,
+                "AQI": entry["main"]["aqi"],
                 "CO": components["co"],
                 "NO": components["no"],
                 "NO2": components["no2"],
@@ -103,19 +107,18 @@ def get_history_data(city_name,start_date,end_date,key):
                 "SO2": components["so2"],
                 "PM2.5": components["pm2_5"],
                 "PM10": components["pm10"],
-                "NH3": components["nh3"],
-                "AQI": entry["main"]["aqi"],
-                "Timestamp": readable_time
+                "NH3": components["nh3"]
             })
         
         # Convert to DataFrame
         df = pd.DataFrame(records)
-        
-        # Save to CSV
-        filename = f"historical_air_pollution_{start_date[:10]}_to_{end_date[:10]}_{city_name}.csv"
-        df.to_csv(filename, index=False)
-        
-        print("Historical data saved successfully!")
+        if(mode == "save"):
+            # Save to CSV
+            filename = f"historical_air_pollution_{start_date[:10]}_to_{end_date[:10]}_{city_name}.csv"
+            df.to_csv(filename, index=False)
+            return f"Data saved to {filename}"
+        else:
+            return df
     
     else:
         print(f"Error {response.status_code}: {response.text}")
@@ -124,6 +127,12 @@ if __name__ == '__main__':
     # Fetching the API Key
     load_dotenv()
     api_key = os.getenv("API_KEY")
-    get_history_data("rawalpindi", "2022-01-01", "2022-12-31", api_key)
+    parser = argparse.ArgumentParser(description="Fetch historical air pollution data.")
+    parser.add_argument("city_name", type=str, help="City name")
+    parser.add_argument("start_date", type=str, help="Start date in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format")
+    parser.add_argument("end_date", type=str, help="End date in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format") 
+    parser.add_argument("mode", type=str, help="enter save to save to csv file or data to return data") 
+    args = parser.parse_args()
+    print(get_history_data(args.city_name,args.start_date, args.end_date,api_key,args.mode))
 
 
