@@ -4,14 +4,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.dates as mdates
 
-# Create two columns layout
-input_col, output_col = st.columns([0.3, 0.7])
+sidebar = st.sidebar
 
 # Store data persistently
 if "data" not in st.session_state:
     st.session_state.data = None
 
-with input_col:
+with sidebar:
     st.write("Input Parameters")
     API_KEY = st.text_input("Enter (openweathermap.org) API KEY:", type="password")
     city_name = st.text_input("Enter city name:")
@@ -29,35 +28,34 @@ with input_col:
                 st.session_state.data = get_latest_data(city_name, API_KEY)
 
 # Add option to switch between table and graph
-view_option = st.radio("Select View:", ("Table", "Graph"))
+    view_option = st.radio("Select View:", ("Table", "Graph"))
 
-with output_col:
-    if st.session_state.data is not None and not isinstance(st.session_state.data, str):
-        # Convert Timestamp to datetime format
-        st.session_state.data["Timestamp"] = pd.to_datetime(st.session_state.data["Timestamp"])
+if st.session_state.data is not None and not isinstance(st.session_state.data, str):
+    # Convert Timestamp to datetime format
+    st.session_state.data["Timestamp"] = pd.to_datetime(st.session_state.data["Timestamp"])
+    
+    if view_option == "Table":
+        st.write("Air Quality Table")
+        st.write(st.session_state.data)
+    else:
+        st.write("Air Quality Graph")
         
-        if view_option == "Table":
-            st.write("Air Quality Table")
-            st.write(st.session_state.data)
-        else:
-            st.write("Air Quality Graph")
-            
-            # Dropdown for selecting which graph to display
-            parameter = st.selectbox("Select a parameter to plot:", ["PM2.5", "PM10", "NO2", "CO", "O3", "SO2", "AQI", "NH3"], key="param_select")
-            
-            # Plot selected parameter
-            fig, ax = plt.subplots(figsize=(8, 4))
-            ax.plot(st.session_state.data["Timestamp"], st.session_state.data[parameter], label=parameter, marker="o", linestyle="-")
-            
-            # Format x-axis to show both date and hour with vertical labels
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
-            ax.tick_params(axis='x', labelsize=8, rotation=90)
-            
-            ax.set_xlabel("Date & Time")
-            ax.set_ylabel(f"{parameter} Level")
-            ax.set_title(f"{parameter} Over Time")
-            ax.legend()
-            ax.grid()
-            
-            # Show plot in Streamlit
-            st.pyplot(fig)
+        # Dropdown for selecting which graph to display
+        parameter = st.selectbox("Select a parameter to plot:", ["PM2.5", "PM10", "NO2", "CO", "O3", "SO2", "AQI", "NH3"], key="param_select")
+        
+        # Plot selected parameter
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.plot(st.session_state.data["Timestamp"], st.session_state.data[parameter], label=parameter, marker="o", linestyle="-")
+        
+        # Format x-axis to show both date and hour with vertical labels
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M'))
+        ax.tick_params(axis='x', labelsize=8, rotation=90)
+        
+        ax.set_xlabel("Date & Time")
+        ax.set_ylabel(f"{parameter} Level")
+        ax.set_title(f"{parameter} Over Time")
+        ax.legend()
+        ax.grid()
+        
+        # Show plot in Streamlit
+        st.pyplot(fig)
