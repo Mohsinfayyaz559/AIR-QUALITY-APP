@@ -1,13 +1,12 @@
-import string 
 import pandas as pd
 import requests
-import json
 import os
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 import argparse
 import pytz
 from timezonefinder import TimezoneFinder
+
 
 def get_cordinates(city_name, key):
     """
@@ -37,19 +36,19 @@ def get_latest_data(city_name, key):
     This function takes the city name as input and returns the latest air pollution data of the city.
     """
     latitude, longitude, timezone_str = get_cordinates(city_name, key)
-    
+
     if latitude is None or longitude is None:
         return "Error: Could not retrieve location data."
     
+
     url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={latitude}&lon={longitude}&appid={key}"
-    
     response = requests.get(url)
     
     if response.status_code == 200:
         data = response.json()
         pollution_data = data["list"][0]  # Get the first (and usually only) entry
         components = pollution_data["components"]
-        
+        print(pollution_data["dt"])
         # Convert UTC timestamp to local timezone
         utc_time = datetime.fromtimestamp(pollution_data["dt"], timezone.utc)
         local_time = utc_time.astimezone(timezone_str)
@@ -93,6 +92,7 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
     
     start_timestamp = int(local_start_dt.astimezone(timezone.utc).timestamp())
     end_timestamp = int(local_end_dt.astimezone(timezone.utc).timestamp())
+
 
     url = f"http://api.openweathermap.org/data/2.5/air_pollution/history?lat={latitude}&lon={longitude}&start={start_timestamp}&end={end_timestamp}&appid={key}"
 
@@ -144,5 +144,4 @@ if __name__ == '__main__':
     parser.add_argument("end_date", type=str, help="End date in YYYY-MM-DD format") 
     parser.add_argument("mode", type=str, help="Enter 'save' to save as CSV, or 'display' to return data") 
     args = parser.parse_args()
-
-    print(get_history_data(args.city_name, args.start_date, args.end_date, api_key, args.mode))
+    print(get_history_data(args.city_name,args.start_date,args.end_date,api_key,args.mode))
