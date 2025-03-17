@@ -35,7 +35,8 @@ with sidebar:
                     st.success("Data updated successfully!")
                 except Exception as e:
                     st.error(f"Error fetching data: {str(e)}")
-
+        else:
+            st.write("Please enter API key and city name to fetch data.")
     # Add option to switch between table and graph
     view_option = st.radio("Select View:", ("Table", "Graph"))
 
