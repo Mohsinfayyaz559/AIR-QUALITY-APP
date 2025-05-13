@@ -1,8 +1,11 @@
-streamlit
-plotly
 pandas
-requests
+numpy
+xgboost
+matplotlib
+scikit-learn
 python-dotenv
-argparse
+joblib
+statsmodels
+requests
 pytz
 timezonefinder
