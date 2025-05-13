@@ -147,8 +147,15 @@ def get_all_history_data(city_name, key):
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
     latitude, longitude, timezone_str = get_cordinates(city_name, key)
-
-    start_date = "2022-01-01"
+    if(os.path.exists("utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
+        print("file exists")
+        df_old = pd.read_csv("utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")
+        start_date = df_old['Timestamp'].iloc[-1]
+        start_date = datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S')
+    else:
+        start_date = "2022-01-01"
+        
+    
     end_date = str(date.today())
     
     if latitude is None or longitude is None:
@@ -199,7 +206,8 @@ def get_all_history_data(city_name, key):
             })
 
         df = pd.DataFrame(records)
-
+        if (os.path.exists("utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
+            df = pd.concat([df_old, df], ignore_index=True)
         filename = f"utils/air_quality_historic_data_csv/historical_air_pollution_all_{city_name}.csv"
         df.to_csv(filename, index=False)
         return df
