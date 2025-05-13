@@ -147,22 +147,24 @@ def get_all_history_data(city_name, key):
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
     latitude, longitude, timezone_str = get_cordinates(city_name, key)
-    if(os.path.exists("utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
-        print("file exists")
-        df_old = pd.read_csv("utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")
+    if(os.path.exists(r"utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
+        df_old = pd.read_csv(r"utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")
         start_date = df_old['Timestamp'].iloc[-1]
-        start_date = datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S')
+        start_date = start_date.replace(' ', 'T')
     else:
-        start_date = "2022-01-01"
-        
-    
-    end_date = str(date.today())
+        print("data file does not exist starting from 2022-01-01")
+        start_date = "2022-01-01T00:00:00"
+          
+    end_date = datetime.now()
+    end_date = end_date.strftime('%Y-%m-%dT%H:%M:%S')
+
     
     if latitude is None or longitude is None:
         return "Error: Could not retrieve location data."
 
     if (start_date == end_date):
-        return "Error: Start date and end date cannot be the same."
+        print("Error: Start date and end date cannot be the same.")
+        return df_old
     
     if "T" in start_date and "T" in end_date:
         local_start_dt = timezone_str.localize(datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S"))
@@ -206,7 +208,7 @@ def get_all_history_data(city_name, key):
             })
 
         df = pd.DataFrame(records)
-        if (os.path.exists("utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
+        if (os.path.exists(r"utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
             df = pd.concat([df_old, df], ignore_index=True)
         filename = f"utils/air_quality_historic_data_csv/historical_air_pollution_all_{city_name}.csv"
         df.to_csv(filename, index=False)
@@ -219,10 +221,11 @@ def get_all_history_data(city_name, key):
 if __name__ == '__main__':
     load_dotenv()
     api_key = os.getenv("API_KEY")
-    parser = argparse.ArgumentParser(description="Fetch historical air pollution data.")
-    parser.add_argument("city_name", type=str, help="City name")
-    parser.add_argument("start_date", type=str, help="Start date in YYYY-MM-DD format")
-    parser.add_argument("end_date", type=str, help="End date in YYYY-MM-DD format") 
-    parser.add_argument("mode", type=str, help="Enter 'save' to save as CSV, or 'display' to return data") 
-    args = parser.parse_args()
-    print(get_history_data(args.city_name,args.start_date,args.end_date,api_key,args.mode))
+    # parser = argparse.ArgumentParser(description="Fetch historical air pollution data.")
+    # parser.add_argument("city_name", type=str, help="City name")
+    # parser.add_argument("start_date", type=str, help="Start date in YYYY-MM-DD format")
+    # parser.add_argument("end_date", type=str, help="End date in YYYY-MM-DD format") 
+    # parser.add_argument("mode", type=str, help="Enter 'save' to save as CSV, or 'display' to return data") 
+    # args = parser.parse_args()
+    #print(get_history_data(args.city_name,args.start_date,args.end_date,api_key,args.mode))
+    print(get_all_history_data("rawalpindi",api_key))

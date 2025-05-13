@@ -11,8 +11,7 @@ import argparse
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
-os.makedirs("utils/xgboost_data", exist_ok=True)
-os.makedirs("utils/xgboost_data/models", exist_ok=True)
+
 
 
  
@@ -72,6 +71,7 @@ def full_training():
     
     multi_model = MultiOutputRegressor(base_model)
     multi_model.fit(X_train, Y_train)
+    os.makedirs("utils/xgboost_data/models", exist_ok=True)
     joblib.dump(multi_model, "utils/xgboost_data/models/xgboost_model.pkl")
    
     last_timestamp = df['Timestamp'].iloc[-1]
@@ -82,36 +82,47 @@ def full_training():
     return multi_model
 
 def predict():
-    model = joblib.load("utils/xgboost_data/models/xgboost_model.pkl")
+    if( not os.path.exists("utils/xgboost_data/models/xgboost_model.pkl")):
+        print("model not trained yet/does not exist")
+        return None
+    else:
+        # Load the model
+        model = joblib.load("utils/xgboost_data/models/xgboost_model.pkl")
+        # Load the origin i-e current timestamp
+        origin_point = datetime.now()
+        #days defore current timestamp
+        starting_point = origin_point - timedelta(days=4)
+        #convert to string format
+        origin_point_str = origin_point.strftime('%Y-%m-%dT%H:%M:%S')
+        starting_point_str = starting_point.strftime('%Y-%m-%dT%H:%M:%S')
+        #getting the data from api
+        df = get_history_data(key= api_key,start_date=starting_point_str, end_date=origin_point_str, city_name='rawalpindi', mode="Data" )
+        df = df.sort_values("Timestamp").reset_index(drop=True)
+        # creating the features
+        df,feature_cols,target_cols = feature_and_target_creation(df, lag_hours=30, forecast_horizon=0)
+        # # Load the last row of the DataFrame
+        X_input = df[feature_cols].iloc[-1:]
+        #model prediction
+        Y_pred = model.predict(X_input)
+        #coverting prediction to int and from row to column
+        Y_pred = np.rint(Y_pred).astype(int).flatten()
+        #getting last timestamp from the original data
+        origin_time = pd.to_datetime(df['Timestamp'].iloc[-1])
+        print("origin time",origin_time)
+        #creating the forecast hours for prediction
+        forecast_hours = pd.date_range(start= origin_time + pd.Timedelta(hours=1), periods=12, freq='h')
+        #joining the forecast hours with the prediction
+        pred_df = pd.DataFrame({
+            "Timestamp": forecast_hours,
+            "AQI": Y_pred
+        })
     
-    origin_point = datetime.now()
-    starting_point = origin_point - timedelta(days=4)
-    origin_point_str = origin_point.strftime('%Y-%m-%dT%H:%M:%S')
-    print("origin_point_str",origin_point_str)
-    starting_point_str = starting_point.strftime('%Y-%m-%dT%H:%M:%S')
-
-    df = get_history_data(key= api_key,start_date=starting_point_str, end_date=origin_point_str, city_name='rawalpindi', mode="Data" )
-    df = df.sort_values("Timestamp").reset_index(drop=True)
-    df,feature_cols,target_cols = feature_and_target_creation(df, lag_hours=30, forecast_horizon=0)
-    
-    X_input = df[feature_cols].iloc[-1:]
-    Y_pred = model.predict(X_input)
-    Y_pred = np.rint(Y_pred).astype(int).flatten()
-    
-
-    origin_time = pd.to_datetime(df['Timestamp'].iloc[-1])
-    forecast_hours = pd.date_range(start=origin_time + pd.Timedelta(hours=1), periods=12, freq='h')
-
-    pred_df = pd.DataFrame({
-        "Timestamp": forecast_hours,
-        "AQI": Y_pred
-    })
-
-     # Combine last N historical values with forecast
-    recent_actuals = df[['Timestamp', 'AQI']].copy()
-    combined_df = pd.concat([recent_actuals, pred_df], ignore_index=True)
-    combined_df.to_csv("utils/xgboost_data/predictions.csv", index=False)
-    return combined_df
+         # Combine last N historical values with forecast
+        recent_actuals = df[['Timestamp', 'AQI']].copy()
+        combined_df = pd.concat([recent_actuals, pred_df], ignore_index=True)
+        os.makedirs("utils/xgboost_data", exist_ok=True)
+        combined_df.to_csv("utils/xgboost_data/predictions.csv", index=False)
+        return combined_df
     
 
 
