@@ -122,7 +122,7 @@ def predict():
         combined_df = pd.concat([recent_actuals, pred_df], ignore_index=True)
         os.makedirs("utils/xgboost_data", exist_ok=True)
         combined_df.to_csv("utils/xgboost_data/predictions.csv", index=False)
-        return combined_df
+        return combined_df, origin_point
     
 
 

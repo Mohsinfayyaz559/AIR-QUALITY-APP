@@ -73,7 +73,7 @@ multi_model.fit(X_train, Y_train)
 
 ################################### making predictions ####################################
 # Make predictions on the test data
-Y_pred = multi_model.predict(X_test)
+Y_pred = multi_model.predict(X_test) 
 Y_pred = np.rint(Y_pred).astype(int)  # Round AQI predictions to nearest integer
 preds_df = pd.DataFrame(Y_pred, columns=[f'Forecast_t+{i}' for i in range(1, forecast_horizon+1)])
 actuals_df = Y_test.reset_index(drop=True)
