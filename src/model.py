@@ -1,17 +1,16 @@
 import pandas as pd
 import numpy as np
 from xgboost import XGBRegressor
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 import os
 from sklearn.multioutput import MultiOutputRegressor
 from dotenv import load_dotenv
-from air_polution_data_get import get_history_data, get_all_history_data
+from air_polution_data_get import get_history_data, update_history_data
 import joblib
 import argparse
 
 load_dotenv()
 api_key = os.getenv("API_KEY")
-
 
 
  
@@ -48,9 +47,9 @@ def feature_and_target_creation(df, lag_hours=30, forecast_horizon=12):
     return df,feature_cols,target_cols
 
 
-def full_training():
+def training(city = 'Rawalpindi'):
     # Load data
-    df = get_all_history_data(key = api_key, city_name='Rawalpindi')
+    df = update_history_data(key = api_key, city_name=city)
 
     # Feature creation
     df,feature_cols,target_cols = feature_and_target_creation(df, lag_hours=30, forecast_horizon=12)
@@ -72,22 +71,25 @@ def full_training():
     multi_model = MultiOutputRegressor(base_model)
     multi_model.fit(X_train, Y_train)
     os.makedirs("utils/xgboost_data/models", exist_ok=True)
-    joblib.dump(multi_model, "utils/xgboost_data/models/xgboost_model.pkl")
+    model_name = f'utils/xgboost_data/models/xgboost_model_{city}.pkl'
+    joblib.dump(multi_model, model_name)
    
     last_timestamp = df['Timestamp'].iloc[-1]
     # Save it to a file
-    with open("utils/xgboost_data/last_trained_timestamp.txt", "w") as f:
+    time_stamp_file = f"utils/xgboost_data/{city}_last_trained_timestamp.txt"
+    with open(time_stamp_file, "w") as f:
         f.write(str(last_timestamp))
     print("model trained till",last_timestamp)
     return multi_model
 
-def predict():
-    if( not os.path.exists("utils/xgboost_data/models/xgboost_model.pkl")):
+def predict(city = 'Rawalpindi'):
+    model_path = f"utils/xgboost_data/models/xgboost_model_{city}.pkl"
+    if( not os.path.exists(model_path) ):
         print("model not trained yet/does not exist")
         return None
     else:
         # Load the model
-        model = joblib.load("utils/xgboost_data/models/xgboost_model.pkl")
+        model = joblib.load(model_path)
         # Load the origin i-e current timestamp
         origin_point = datetime.now()
         #days defore current timestamp
@@ -96,9 +98,11 @@ def predict():
         origin_point_str = origin_point.strftime('%Y-%m-%dT%H:%M:%S')
         starting_point_str = starting_point.strftime('%Y-%m-%dT%H:%M:%S')
         #getting the data from api
-        df = get_history_data(key= api_key,start_date=starting_point_str, end_date=origin_point_str, city_name='rawalpindi', mode="Data" )
-        df = df.sort_values("Timestamp").reset_index(drop=True)
-        # creating the features
+        df_data = get_history_data(key= api_key,start_date=starting_point_str, end_date=origin_point_str, city_name=city, mode="Data" )
+        if not isinstance(df_data, pd.DataFrame):
+            return df_data, None  # Return the error message and None
+        df = df_data.sort_values("Timestamp").reset_index(drop=True)
+       # creating the features
         df,feature_cols,target_cols = feature_and_target_creation(df, lag_hours=30, forecast_horizon=0)
         # # Load the last row of the DataFrame
         X_input = df[feature_cols].iloc[-1:]
@@ -108,7 +112,6 @@ def predict():
         Y_pred = np.rint(Y_pred).astype(int).flatten()
         #getting last timestamp from the original data
         origin_time = pd.to_datetime(df['Timestamp'].iloc[-1])
-        print("origin time",origin_time)
         #creating the forecast hours for prediction
         forecast_hours = pd.date_range(start= origin_time + pd.Timedelta(hours=1), periods=12, freq='h')
         #joining the forecast hours with the prediction
@@ -121,17 +124,22 @@ def predict():
         recent_actuals = df[['Timestamp', 'AQI']].copy()
         combined_df = pd.concat([recent_actuals, pred_df], ignore_index=True)
         os.makedirs("utils/xgboost_data", exist_ok=True)
-        combined_df.to_csv("utils/xgboost_data/predictions.csv", index=False)
+        pridictions_file = f"utils/xgboost_data/predictions_{city}.csv"
+        combined_df.to_csv(pridictions_file, index=False)
         return combined_df, origin_point
     
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="give arg action the following values: full_train or predict")
-    parser.add_argument("action", type=str, help="full_train or predict") 
+    parser = argparse.ArgumentParser(description="give arg action the following values: train or predict")
+    parser.add_argument("action", type=str, help="train or predict")
+    parser.add_argument("--city", type=str, help="Optional city name for prediction")
+
     args = parser.parse_args()
-    if(args.action == "full_train"):
-        full_training()
-    if(args.action == "predict"):
-        predictions = predict()
+
+    if args.action == "train":
+        training(city = args.city if args.city else 'Rawalpindi')
+
+    if args.action == "predict":
+        predictions = predict(city = args.city if args.city else 'Rawalpindi')
         print(predictions)

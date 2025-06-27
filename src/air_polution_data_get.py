@@ -7,7 +7,7 @@ import argparse
 import pytz
 from timezonefinder import TimezoneFinder
 
-os.makedirs("utils/air_quality_historic_data_csv", exist_ok=True)
+
 
 ################################################### get cordinates #######################################################
 def get_cordinates(city_name, key):
@@ -132,6 +132,7 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
         df = pd.DataFrame(records)
 
         if mode == "save":
+            os.makedirs("utils/air_quality_historic_data_csv", exist_ok=True)
             filename = f"utils/air_quality_historic_data_csv/historical_air_pollution_{start_date}_to_{end_date}_{city_name}.csv"
             df.to_csv(filename, index=False)
             return f"Data saved to {filename}"
@@ -142,13 +143,14 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
 
 
 #################################################### get all history data #######################################################
-def get_all_history_data(city_name, key):
+def update_history_data(city_name, key):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
     latitude, longitude, timezone_str = get_cordinates(city_name, key)
-    if(os.path.exists(r"utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
-        df_old = pd.read_csv(r"utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")
+    file_path = fr"utils\air_quality_historic_data_csv\historical_air_pollution_all_{city_name}.csv"
+    if(os.path.exists(file_path)):
+        df_old = pd.read_csv(file_path)
         start_date = df_old['Timestamp'].iloc[-1]
         start_date = start_date.replace(' ', 'T')
     else:
@@ -208,10 +210,9 @@ def get_all_history_data(city_name, key):
             })
 
         df = pd.DataFrame(records)
-        if (os.path.exists(r"utils\air_quality_historic_data_csv\historical_air_pollution_all_rawalpindi.csv")):
+        if (os.path.exists(file_path)):
             df = pd.concat([df_old, df], ignore_index=True)
-        filename = f"utils/air_quality_historic_data_csv/historical_air_pollution_all_{city_name}.csv"
-        df.to_csv(filename, index=False)
+        df.to_csv(file_path, index=False)
         return df
     else:
         return f"Error {response.status_code}: {response.text}"
@@ -228,4 +229,4 @@ if __name__ == '__main__':
     # parser.add_argument("mode", type=str, help="Enter 'save' to save as CSV, or 'display' to return data") 
     # args = parser.parse_args()
     #print(get_history_data(args.city_name,args.start_date,args.end_date,api_key,args.mode))
-    print(get_all_history_data("rawalpindi",api_key))
+    print(update_history_data("Rawalpindi",api_key))

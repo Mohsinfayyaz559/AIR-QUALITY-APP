@@ -1,6 +1,9 @@
 from src.air_polution_data_get import get_history_data, get_latest_data
 import streamlit as st
 import plotly.express as px
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 sidebar = st.sidebar
 
