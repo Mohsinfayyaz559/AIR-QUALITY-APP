@@ -1,3 +1,5 @@
+#to run file type "uvicorn FAPI:app --reload"
+
 from fastapi import FastAPI, HTTPException,Query 
 from fastapi.security.api_key import APIKeyHeader
 import sys

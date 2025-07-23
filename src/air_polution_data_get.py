@@ -18,7 +18,7 @@ def get_cordinates(city_name, key):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
-        if data:
+        if data and isinstance(data, list) and len(data) > 0:
             latitude = data[0]["lat"]
             longitude = data[0]["lon"]
             
@@ -29,19 +29,23 @@ def get_cordinates(city_name, key):
             if not timezone_str:
                 timezone_str = "UTC"  # Fallback to UTC
             
-            return latitude, longitude, pytz.timezone(timezone_str)
+            return latitude, longitude, pytz.timezone(timezone_str),"None"
+        else:
+            print("Error: City not found or incorrect spelled name.")
+            return None, None, None,"City not found/error in name."
     print(f"Error: {response.status_code} - {response.text}")
-    return None, None, pytz.utc
+    return None, None, None, "invalid API key."
 
 #################################################### get latest data #######################################################
 def get_latest_data(city_name, key):
     """
     This function takes the city name as input and returns the latest air pollution data of the city.
     """
-    latitude, longitude, timezone_str = get_cordinates(city_name, key)
+    latitude, longitude, timezone_str,error = get_cordinates(city_name, key)
 
-    if latitude is None or longitude is None:
-        return "Error: Could not retrieve location data."
+    if latitude is None or longitude is None or timezone_str is None:
+        print(error)
+        return error
     
 
     url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={latitude}&lon={longitude}&appid={key}"
@@ -80,11 +84,13 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
-    latitude, longitude, timezone_str = get_cordinates(city_name, key)
+    latitude, longitude, timezone_str,error = get_cordinates(city_name, key)
 
-    if latitude is None or longitude is None:
-        return "Error: Could not retrieve location data."
+    if latitude is None or longitude is None or timezone_str is None:
+        print(error)
+        return error
 
+    
     if (start_date == end_date):
         return "Error: Start date and end date cannot be the same."
     
@@ -128,6 +134,7 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
                 "PM10": components["pm10"],
                 "NH3": components["nh3"]
             })
+    
 
         df = pd.DataFrame(records)
 
@@ -147,7 +154,11 @@ def update_history_data(city_name, key):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
-    latitude, longitude, timezone_str = get_cordinates(city_name, key)
+    latitude, longitude, timezone_str, error  = get_cordinates(city_name, key)
+    if latitude is None or longitude is None or timezone_str is None:
+        print(error)
+        return error
+    
     file_path = fr"utils\air_quality_historic_data_csv\historical_air_pollution_all_{city_name}.csv"
     if(os.path.exists(file_path)):
         df_old = pd.read_csv(file_path)
