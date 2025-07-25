@@ -18,7 +18,7 @@ async def get_cordinates(city_name, key):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
-        if data:
+        if data and isinstance(data, list) and len(data) > 0:
             latitude = data[0]["lat"]
             longitude = data[0]["lon"]
             
@@ -29,17 +29,22 @@ async def get_cordinates(city_name, key):
             if not timezone_str:
                 timezone_str = "UTC"  # Fallback to UTC
             
-            return latitude, longitude, pytz.timezone(timezone_str)
+            return latitude, longitude, pytz.timezone(timezone_str),"None"
+        else:
+            print("Error: City not found or incorrect spelled name.")
+            return None, None, None,"City not found/error in name."
     print(f"Error: {response.status_code} - {response.text}")
-    return None, None, pytz.utc
+    return None, None, None, "invalid API key."
 
 async def get_history_data(city_name, start_date, end_date, key, mode="save"):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
-    latitude, longitude, timezone_str = await get_cordinates(city_name, key)
-    if latitude is None or longitude is None:
-        return "Error: Could not retrieve location data."
+    latitude, longitude, timezone_str,error = await get_cordinates(city_name, key)
+
+    if latitude is None or longitude is None or timezone_str is None:
+        print(error)
+        return error
 
     if (start_date == end_date):
         return "Error: Start date and end date cannot be the same."
@@ -84,6 +89,7 @@ async def get_history_data(city_name, start_date, end_date, key, mode="save"):
                 "PM10": components["pm10"],
                 "NH3": components["nh3"]
             })
+    
 
         df = pd.DataFrame(records)
 
@@ -149,7 +155,7 @@ async def predict(API_key, city_name = 'rawalpindi'):
     if os.path.exists(last_origin_path):
         # load the last origin point from the file
         with open(last_origin_path, "r") as f:
-            last_origin = datetime.fromisoformat(f.read().strip())
+            last_origin = datetime.fromisoformat(f.read().strip()) 
             print(last_origin, origin_point)
             if last_origin == origin_point:
                 # If the last origin is the same as the current, return the previous predictions
@@ -170,7 +176,7 @@ async def predict(API_key, city_name = 'rawalpindi'):
         # Load the model
         model = joblib.load(model_path)
         #getting the data from api
-        df = await get_history_data(key= API_key,start_date=starting_point_str, end_date=origin_point_str, city_name='rawalpindi', mode="Data" )
+        df = await get_history_data(key= API_key,start_date=starting_point_str, end_date=origin_point_str, city_name= city_name, mode="Data" )
         if not isinstance(df, pd.DataFrame):
             return df, None  # Return the error message and None
         df = df.sort_values("Timestamp").reset_index(drop=True)
