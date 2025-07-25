@@ -120,13 +120,11 @@ def predict(city = 'Rawalpindi'):
             "AQI": Y_pred
         })
     
-         # Combine last N historical values with forecast
-        recent_actuals = df[['Timestamp', 'AQI']].copy()
-        combined_df = pd.concat([recent_actuals, pred_df], ignore_index=True)
+        #saving pred data frame
         os.makedirs("utils/xgboost_data", exist_ok=True)
         pridictions_file = f"utils/xgboost_data/predictions_{city}.csv"
-        combined_df.to_csv(pridictions_file, index=False)
-        return combined_df, origin_point
+        pred_df.to_csv(pridictions_file, index=False)
+        return pred_df, origin_point
     
 
 

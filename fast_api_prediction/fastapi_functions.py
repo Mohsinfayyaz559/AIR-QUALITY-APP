@@ -198,13 +198,11 @@ async def predict(API_key, city_name = 'rawalpindi'):
             "AQI": Y_pred
         })
     
-         # Combine last N historical values with forecast
-        recent_actuals = df[['Timestamp', 'AQI']].copy()
-        combined_df = pd.concat([recent_actuals, pred_df], ignore_index=True)
+        #saving pred data frame
         os.makedirs("utils/xgboost_data", exist_ok=True)
-        combined_df.to_csv(pridictions_file, index=False)
+        pred_df.to_csv(pridictions_file, index=False)
         # Save the origin point
         with open(last_origin_path, "w") as f:
             f.write(origin_point.isoformat())
-        return combined_df, origin_point
+        return pred_df, origin_point
 
