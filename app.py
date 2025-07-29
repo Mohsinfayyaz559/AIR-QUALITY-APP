@@ -9,6 +9,11 @@ import sys
 import requests
 import pandas as pd
 
+st.set_page_config(
+    page_title="Air QualityApp",
+    layout="wide",  # <- This sets wide mode
+)
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Initialize session state variables
@@ -20,8 +25,8 @@ if "key_validation" not in st.session_state:
     st.session_state.key_validation = None
 
 # Set page configuration
-st.header("Air Quality Prediction App",divider=True)
-st.write("This app fetches air quality data and predicts future values based on historical data.")
+st.title(":blue[Air Quality Prediction App]")
+st.subheader("This app fetches air quality data and predicts future values based on historical data.",divider=True)
 API_KEY = st.text_input("Enter (openweathermap.org) API KEY:", type="password")
 #checking api key
 latitude, longitude, timezone_str,error = get_cordinates("rawalpindi", API_KEY)
@@ -97,7 +102,7 @@ if st.session_state.key_validation is True:
                         except Exception as e:
                             st.error(f"Error fetching data: {str(e)}")
                 else:
-                    st.write("Please enter API key and city name to fetch data.")
+                    st.error("Please enter city name to fetch data.")
             # Add option to switch between table and graph
             view_option_data = st.radio("Select View:", ("Table", "Graph"),key="data_get")
 
