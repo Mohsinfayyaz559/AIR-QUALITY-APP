@@ -9,3 +9,12 @@ statsmodels
 requests
 pytz
 timezonefinder
+fastapi
+uvicorn
+
+
+
+
+
+
+
