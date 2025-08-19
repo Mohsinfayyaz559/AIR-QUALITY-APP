@@ -7,4 +7,4 @@ This repository is dedicated to the prediction of Air Quality of cities. The dat
 
 3.Now go back to the root folder (i-e AIR-QUAILTY-PREDICTION) and run the app.py file using command "streamlit run app.py"
 
-4.The app will now run locally ,keep in mind that you need internet for this app to work as it pull live data from the openweathermap server s
+4.The app will now run locally ,keep in mind that you need internet for this app to work as it pulls live data from the openweathermap server
