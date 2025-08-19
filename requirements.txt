@@ -11,10 +11,3 @@ pytz
 timezonefinder
 fastapi
 uvicorn
-
-
-
-
-
-
-
