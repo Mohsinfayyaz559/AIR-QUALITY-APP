@@ -11,7 +11,7 @@ import pandas as pd
 
 st.set_page_config(
     page_title="Air QualityApp",
-    layout="wide",  # <- This sets wide mode
+    layout="wide",
 )
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
