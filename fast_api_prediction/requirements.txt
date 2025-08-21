@@ -7,4 +7,4 @@ requests
 pytz
 timezonefinder
 scikit-learn
-xgboost
+xgboosts
