@@ -147,7 +147,7 @@ if st.session_state.key_validation is True:
             if st.button("Predict"):    
                 with st.spinner("Predicting future values..."):
                     try:
-                        url = f"http://127.0.0.1:8000/prediction?openweathermap_api_key={API_KEY}&city_name={city}"
+                        url = f"https://mk12rule-air-quality-api.hf.space/prediction?openweathermap_api_key={API_KEY}&city_name={city}"
                         response = requests.get(url)
                         predictions = response.json()
                         predictions = pd.DataFrame(predictions)
