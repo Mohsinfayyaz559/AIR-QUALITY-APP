@@ -11,3 +11,4 @@ pytz
 timezonefinder
 fastapi
 uvicorn
+plotly.express
