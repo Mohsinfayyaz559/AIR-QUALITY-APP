@@ -1,0 +1,13 @@
+pandas
+numpy
+xgboost
+matplotlib
+scikit-learn
+python-dotenv
+joblib
+statsmodels
+requests
+pytz
+timezonefinder
+fastapi
+uvicorn
