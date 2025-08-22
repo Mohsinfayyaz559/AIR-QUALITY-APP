@@ -6,3 +6,6 @@ the APi for air quaility prediction can be hit at
 
 the app can be can be used at 
 ( )
+
+
+if you want to run the project locally use the local folder and follow its readme
