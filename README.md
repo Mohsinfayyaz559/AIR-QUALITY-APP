@@ -1,5 +1,5 @@
 # Air-Quality-Prediction
-This repository is dedicated to the prediction of Air Quality of cities of Pakistan. The data used in this project comes from the openweathermap API with the following documentation (https://openweathermap.org/api)
+This repository is dedicated to the prediction of Air Quality of cities of Pakistan. The data used in this project comes from the openweathermap API with the following documentation (https://openweathermap.org/api/air-pollution)
 
 the custom API for air quality prediction can be hit at 
 ( https://mk12rule-air-quality-api.hf.space/prediction?openweathermap_api_key={}&city_name={} )
