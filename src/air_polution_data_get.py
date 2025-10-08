@@ -2,15 +2,39 @@ import pandas as pd
 import requests
 import os
 from datetime import datetime, timezone, timedelta, date
-from dotenv import load_dotenv
-import argparse
+from dotenv import load_dotenv,find_dotenv
 import pytz
 from timezonefinder import TimezoneFinder
+from huggingface_hub import HfApi, upload_file,hf_hub_download
+import asyncio
+
+load_dotenv(find_dotenv())  
+API_key = os.getenv("openweather_API_key")
+hf_token = os.getenv("HF_TOKEN")
 
 
+############################################# safe upload to hf hub #######################################################
+async def safe_upload(path, repo_id, repo_type, token, delay=3, retries=3):
+    """Retry upload with backoff and spacing to avoid HF 500 errors."""
+    for attempt in range(1, retries + 1):
+        try:
+            upload_file(
+                path_or_fileobj=path,
+                path_in_repo=os.path.basename(path),
+                repo_id=repo_id,
+                repo_type=repo_type,
+                token=token,
+            )
+            print(f"Uploaded {os.path.basename(path)}")
+            await asyncio.sleep(delay)  # give HF some breathing room
+            return
+        except Exception as e:
+            print(f"⚠️ Upload attempt {attempt} failed: {e}")
+            await asyncio.sleep(delay * attempt)
+    print(f"Failed to upload {path} after {retries} retries")
 
 ################################################### get cordinates #######################################################
-def get_cordinates(city_name, key):
+async def get_cordinates(city_name, key = API_key):
     """
     Get the latitude, longitude, and timezone for a city.
     """
@@ -36,12 +60,13 @@ def get_cordinates(city_name, key):
     print(f"Error: {response.status_code} - {response.text}")
     return None, None, None, "invalid API key."
 
+
 #################################################### get latest data #######################################################
-def get_latest_data(city_name, key):
+async def get_latest_data(city_name, key = API_key):
     """
     This function takes the city name as input and returns the latest air pollution data of the city.
     """
-    latitude, longitude, timezone_str,error = get_cordinates(city_name, key)
+    latitude, longitude, timezone_str,error = await get_cordinates(city_name, key)
 
     if latitude is None or longitude is None or timezone_str is None:
         print(error)
@@ -80,17 +105,16 @@ def get_latest_data(city_name, key):
 
 
 #################################################### get history data #######################################################
-def get_history_data(city_name, start_date, end_date, key, mode="save"):
+async def get_history_data(city_name, start_date, end_date, key = API_key, mode="save"):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
-    latitude, longitude, timezone_str,error = get_cordinates(city_name, key)
+    latitude, longitude, timezone_str,error = await get_cordinates(city_name, key)
 
     if latitude is None or longitude is None or timezone_str is None:
         print(error)
         return error
 
-    
     if (start_date == end_date):
         return "Error: Start date and end date cannot be the same."
     
@@ -139,8 +163,8 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
         df = pd.DataFrame(records)
 
         if mode == "save":
-            os.makedirs("utils/air_quality_historic_data_csv", exist_ok=True)
-            filename = f"utils/air_quality_historic_data_csv/historical_air_pollution_{start_date}_to_{end_date}_{city_name}.csv"
+            os.makedirs("/tmp/air_quality_historic_data_csv", exist_ok=True)
+            filename = f"/tmp/air_quality_historic_data_csv/historical_air_pollution_{start_date}_to_{end_date}_{city_name}.csv"
             df.to_csv(filename, index=False)
             return f"Data saved to {filename}"
         else:
@@ -148,18 +172,29 @@ def get_history_data(city_name, start_date, end_date, key, mode="save"):
     else:
         return f"Error {response.status_code}: {response.text}"
 
-
 #################################################### get all history data #######################################################
-def update_history_data(city_name, key):
+async def update_history_data(city_name, key = API_key):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
-    latitude, longitude, timezone_str, error  = get_cordinates(city_name, key)
+    latitude, longitude, timezone_str, error  = await get_cordinates(city_name, key)
     if latitude is None or longitude is None or timezone_str is None:
         print(error)
         return error
     
-    file_path = fr"utils\air_quality_historic_data_csv\historical_air_pollution_all_{city_name}.csv"
+    try:
+        file_path = hf_hub_download(
+            repo_id="mk12rule/pakistan_air_quality_dataset",
+            filename=f"historical_air_pollution_all_{city_name}.csv",       # update this to match your file name in the repo
+            repo_type="dataset"
+            )
+        print(f"data file downloaded from hf hub: {file_path}")
+    except Exception as e:
+        print(f"Error: {e}") 
+        print("data file could not be downloaded from hf hub")
+        file_path = f"tmp/air_quality_historic_data_csv/historical_air_pollution_all_{city_name}.csv"
+
+    
     if(os.path.exists(file_path)):
         df_old = pd.read_csv(file_path)
         start_date = df_old['Timestamp'].iloc[-1]
@@ -224,9 +259,19 @@ def update_history_data(city_name, key):
         if (os.path.exists(file_path)):
             df = pd.concat([df_old, df], ignore_index=True)
         df.to_csv(file_path, index=False)
+
+        await safe_upload(
+            file_path,
+            repo_id="mk12rule/pakistan_air_quality_dataset",
+            repo_type="dataset",
+            token=hf_token
+            )
+            
         return df
     else:
         return f"Error {response.status_code}: {response.text}"
+    
+
     
 
 
