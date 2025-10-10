@@ -17,4 +17,4 @@ jobs:
           curl -X POST \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer ${{ secrets.RETRAIN_API_KEY }}" \
-          https://huggingface.co/spaces/mk12rule/Air_quality_app/retrain
+          https://huggingface.co/spaces/mk12rule/Air_quality_api/retrain
