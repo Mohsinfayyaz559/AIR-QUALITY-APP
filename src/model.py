@@ -75,8 +75,9 @@ async def training():
         
         multi_model = MultiOutputRegressor(base_model)
         multi_model.fit(X_train, Y_train)
-        os.makedirs("tmp/models", exist_ok=True)
-        model_name = f'tmp/models/xgboost_model_{city}.pkl'
+        for sub in ["air_quality_historic_data_csv", "models"]:
+            os.makedirs(os.path.join("/tmp", sub), exist_ok=True)
+        model_name = os.path.join("/tmp", "models", f"xgboost_model_{city}.pkl")
         joblib.dump(multi_model, model_name)
         print(f"Model for {city} trained successfully.")
 
@@ -86,11 +87,12 @@ async def training():
             repo_type="model",
             token=hf_token
             )
-
             
         last_timestamp = df['Timestamp'].iloc[-1]
         # Save it to a file
-        time_stamp_file = f"tmp/models/{city}_last_trained_timestamp.txt"
+        for sub in ["air_quality_historic_data_csv", "models","predictions"]:
+            os.makedirs(os.path.join("/tmp", sub), exist_ok=True)
+        time_stamp_file = os.path.join("/tmp", "models", f"{city}_last_trained_timestamp.txt")
         with open(time_stamp_file, "w") as f:
             f.write(str(last_timestamp))
             print(f"Model for {city} saved as {model_name}")
@@ -99,10 +101,13 @@ async def training():
     print("All models trained successfully.")
 
 async def predict( city_name = 'rawalpindi'):
-        
+
+    for sub in ["air_quality_historic_data_csv", "models","predictions"]:
+            os.makedirs(os.path.join("/tmp", sub), exist_ok=True)
+
     city_name = city_name.lower()
-    last_origin_path = f"tmp/predictions/{city_name}_last_origin_point"
-    pridictions_file = f"tmp/predictions/predictions_{city_name}.csv"
+    last_origin_path = os.path.join("/tmp", "predictions", f"{city_name}_last_origin_point.txt")
+    pridictions_file = os.path.join("/tmp", "predictions", f"predictions_{city_name}.csv")
     # Paths for model and data files
     try:
         model_path = hf_hub_download(
@@ -110,8 +115,14 @@ async def predict( city_name = 'rawalpindi'):
         filename=f"xgboost_model_{city_name}.pkl",
         )
     except Exception as e:
+        file_path = os.path.join("/tmp", "models", f"xgboost_model_{city_name}.pkl")
         print(f"Error: {e}")
-        model_path = f"tmp/models/xgboost_model_{city_name}.pkl"
+        if os.path.exists(file_path):
+            model_path = file_path
+            print(f"Using local model at {model_path}")
+        else:
+            model_path = f"backup/models/xgboost_model_{city_name}.pkl"
+            print(f"Using backup model at {model_path}")
 
     # Load the origin i-e current timestamp
     tz = pytz.timezone("Asia/Karachi")
@@ -167,7 +178,8 @@ async def predict( city_name = 'rawalpindi'):
         })
     
         #saving pred data frame
-        os.makedirs("tmp/predictions/", exist_ok=True)
+        for sub in ["air_quality_historic_data_csv", "models"]:
+            os.makedirs(os.path.join("/tmp", sub), exist_ok=True)
         pred_df.to_csv(pridictions_file, index=False)
         # Save the origin point
         with open(last_origin_path, "w") as f:

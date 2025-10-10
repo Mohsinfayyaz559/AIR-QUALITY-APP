@@ -4,10 +4,9 @@ from fastapi import FastAPI, HTTPException,Query
 from src.model import predict,training
 import pandas as pd
 import asyncio
-
+import os
 
 app = FastAPI()
-
 
 @app.get("/")
 def root():

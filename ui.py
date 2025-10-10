@@ -7,6 +7,7 @@ import datetime
 import requests
 import pandas as pd
 import asyncio
+import os
 
 
 st.set_page_config(
@@ -104,7 +105,7 @@ with data_tab:
             if st.button("Predict"):    
                 with st.spinner("Predicting future values..."):
                     try:
-                        url = f"https://mk12rule-pakistan-air-quality-app.hf.spacecd/prediction?city_name={city}"
+                        url = f"http://127.0.0.1:8000/prediction?city_name={city}"
                         response = requests.get(url)
                         predictions = response.json()
                         predictions = pd.DataFrame(predictions)

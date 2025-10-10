@@ -163,8 +163,8 @@ async def get_history_data(city_name, start_date, end_date, key = API_key, mode=
         df = pd.DataFrame(records)
 
         if mode == "save":
-            os.makedirs("/tmp/air_quality_historic_data_csv", exist_ok=True)
-            filename = f"/tmp/air_quality_historic_data_csv/historical_air_pollution_{start_date}_to_{end_date}_{city_name}.csv"
+            os.makedirs("tmp/air_quality_historic_data_csv", exist_ok=True)
+            filename = f"tmp/air_quality_historic_data_csv/historical_air_pollution_{start_date}_to_{end_date}_{city_name}.csv"
             df.to_csv(filename, index=False)
             return f"Data saved to {filename}"
         else:
@@ -177,6 +177,9 @@ async def update_history_data(city_name, key = API_key):
     """
     Fetch historical air pollution data for a given city and adjust timestamps to the local timezone.
     """
+    tmp_path = os.path.join("/tmp", "air_quality_historic_data_csv", f"historical_air_pollution_all_{city_name}.csv")
+
+
     latitude, longitude, timezone_str, error  = await get_cordinates(city_name, key)
     if latitude is None or longitude is None or timezone_str is None:
         print(error)
@@ -192,7 +195,12 @@ async def update_history_data(city_name, key = API_key):
     except Exception as e:
         print(f"Error: {e}") 
         print("data file could not be downloaded from hf hub")
-        file_path = f"tmp/air_quality_historic_data_csv/historical_air_pollution_all_{city_name}.csv"
+        if(os.path.exists(tmp_path)):
+            file_path = tmp_path
+            print(f"using data file found in tmp: {file_path}")
+        else:
+            file_path = f"backup/air_quality_historic_data_csv/historical_air_pollution_all_{city_name}.csv"
+            print(f"using data file found in backup: {file_path}")
 
     
     if(os.path.exists(file_path)):
@@ -255,23 +263,23 @@ async def update_history_data(city_name, key = API_key):
                 "NH3": components["nh3"]
             })
 
+        for sub in ["air_quality_historic_data_csv", "models","predictions"]:
+            os.makedirs(os.path.join("/tmp", sub), exist_ok=True)
+        
         df = pd.DataFrame(records)
-        if (os.path.exists(file_path)):
-            df = pd.concat([df_old, df], ignore_index=True)
-        df.to_csv(file_path, index=False)
+        df = pd.concat([df_old, df], ignore_index=True)
+        df.to_csv(tmp_path, index=False)
+        print(f"Data saved to {tmp_path}")
 
         await safe_upload(
-            file_path,
+            tmp_path,
             repo_id="mk12rule/pakistan_air_quality_dataset",
             repo_type="dataset",
             token=hf_token
             )
-            
         return df
     else:
         return f"Error {response.status_code}: {response.text}"
-    
-
     
 
 

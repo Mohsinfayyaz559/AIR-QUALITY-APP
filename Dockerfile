@@ -3,11 +3,16 @@ FROM python:3.11-slim
 WORKDIR /app
 
 COPY requirements.txt .
-
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 7860
+RUN chmod +x /app/start.sh
+RUN mkdir -p /app/.streamlit
+RUN chmod -R 777 /app/.streamlit
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+EXPOSE 7860
+EXPOSE 8000
+
+CMD ["/app/start.sh"]

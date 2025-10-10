@@ -13,3 +13,5 @@ pytz==2024.2
 timezonefinder==6.5.8
 scikit-learn==1.6.1
 xgboost==3.0.0
+huggingface_hub==0.34.4
+streamlit==1.47.0
