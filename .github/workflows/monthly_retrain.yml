@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Trigger retraining API
         run: |
-          curl -X POST https://mk12rule-air-quality-api.hf.space/retrain
+          curl -v -X POST https://mk12rule-air-quality-api.hf.space/retrain
