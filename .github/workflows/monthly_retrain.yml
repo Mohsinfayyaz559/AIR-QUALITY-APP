@@ -1,20 +1,14 @@
-name: Monthly Retrain
+name: Monthly retraining trigger
 
 on:
   schedule:
-    # Runs at 00:00 on the 1st day of each month
-    - cron: "0 0 1 * *"
-
-  # (Optional) Allow manual trigger too
-  workflow_dispatch:
+    - cron: "0 0 1 * *"  # Runs on the 1st of every month at midnight UTC
+  workflow_dispatch:      # allows manual trigger
 
 jobs:
   retrain:
     runs-on: ubuntu-latest
     steps:
-      - name: Hit retrain API endpoint
+      - name: Trigger retraining API
         run: |
-          echo "Calling retrain endpoint..."
           curl -X POST https://mk12rule-air-quality-api.hf.space/retrain
-
-
