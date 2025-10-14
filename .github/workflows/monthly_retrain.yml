@@ -14,7 +14,8 @@ jobs:
     steps:
       - name: Hit retrain API endpoint
         run: |
-          curl -X 'POST' \
-          'https://mk12rule-air-quality-api.hf.space/retrain' \
-          -H 'accept: application/json' \
-          -d ''
+          echo "Calling retrain endpoint..."
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            https://mk12rule-air-quality-app.hf.space/retrain
+
