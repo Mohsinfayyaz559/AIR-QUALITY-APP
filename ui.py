@@ -1,11 +1,15 @@
 #to run file use command: streamlit run ui.py
-# Force Streamlit to use a writable directory for config/cache
+
 import os
+# Force Streamlit to use /tmp instead of root-level /.streamlit
 os.environ["STREAMLIT_HOME"] = "/tmp"
 os.environ["STREAMLIT_CACHE_DIR"] = "/tmp/.cache"
 os.environ["STREAMLIT_CONFIG_DIR"] = "/tmp/.streamlit"
+
+# Create the directories
 os.makedirs("/tmp/.streamlit", exist_ok=True)
 os.makedirs("/tmp/.cache", exist_ok=True)
+
 
 from src.air_polution_data_get import get_history_data, get_latest_data,get_cordinates
 import streamlit as st

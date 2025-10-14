@@ -1,16 +1,15 @@
 #to run file type "uvicorn api:app --reload"
 
+import os
+os.makedirs("/tmp/.cache", exist_ok=True)
+os.environ["HF_HOME"] = "/tmp/.cache"
+os.environ["HF_HUB_CACHE"] = "/tmp/.cache"
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/.cache"
+
 from fastapi import FastAPI, HTTPException,Query 
 from src.model import predict,training
 import pandas as pd
 import asyncio
-import os
-
-os.environ["HF_HOME"] = "/tmp/.cache"
-os.environ["HF_HUB_CACHE"] = "/tmp/.cache"
-os.environ["TRANSFORMERS_CACHE"] = "/tmp/.cache"
-os.makedirs("/tmp/.cache", exist_ok=True)
-
 
 app = FastAPI()
 
