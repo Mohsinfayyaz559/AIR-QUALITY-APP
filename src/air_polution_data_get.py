@@ -189,7 +189,8 @@ async def update_history_data(city_name, key = API_key):
         file_path = hf_hub_download(
             repo_id="mk12rule/pakistan_air_quality_dataset",
             filename=f"historical_air_pollution_all_{city_name}.csv",       # update this to match your file name in the repo
-            repo_type="dataset"
+            repo_type="dataset",
+            cache_dir="/tmp/.cache"
             )
         print(f"data file downloaded from hf hub: {file_path}")
     except Exception as e:

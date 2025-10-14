@@ -1,5 +1,11 @@
 #to run file use command: streamlit run ui.py
-
+# Force Streamlit to use a writable directory for config/cache
+import os
+os.environ["STREAMLIT_HOME"] = "/tmp"
+os.environ["STREAMLIT_CACHE_DIR"] = "/tmp/.cache"
+os.environ["STREAMLIT_CONFIG_DIR"] = "/tmp/.streamlit"
+os.makedirs("/tmp/.streamlit", exist_ok=True)
+os.makedirs("/tmp/.cache", exist_ok=True)
 from src.air_polution_data_get import get_history_data, get_latest_data,get_cordinates
 import streamlit as st
 import plotly.express as px
@@ -7,7 +13,7 @@ import datetime
 import requests
 import pandas as pd
 import asyncio
-import os
+
 
 
 st.set_page_config(
@@ -105,7 +111,7 @@ with data_tab:
             if st.button("Predict"):    
                 with st.spinner("Predicting future values..."):
                     try:
-                        url = f"http://127.0.0.1:8000/prediction?city_name={city}"
+                        url = f"https://mk12rule-air-quality-api.hf.space/prediction?city_name={city}"
                         response = requests.get(url)
                         predictions = response.json()
                         predictions = pd.DataFrame(predictions)

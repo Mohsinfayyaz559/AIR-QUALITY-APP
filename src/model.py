@@ -110,19 +110,30 @@ async def predict( city_name = 'rawalpindi'):
     pridictions_file = os.path.join("/tmp", "predictions", f"predictions_{city_name}.csv")
     # Paths for model and data files
     try:
+
         model_path = hf_hub_download(
         repo_id="mk12rule/pakistan_air_quality_models",
         filename=f"xgboost_model_{city_name}.pkl",
+        cache_dir="/tmp/.cache"
         )
+        print(f"Model for {city_name} downloaded from Hugging Face at {model_path}")
+
     except Exception as e:
-        file_path = os.path.join("/tmp", "models", f"xgboost_model_{city_name}.pkl")
         print(f"Error: {e}")
+        file_path = os.path.join("/tmp", "models", f"xgboost_model_{city_name}.pkl")
+        print(f"Checking for local model at {file_path}")
+        backup_path = f"backup/models/xgboost_model_{city_name}.pkl"
         if os.path.exists(file_path):
             model_path = file_path
             print(f"Using local model at {model_path}")
-        else:
-            model_path = f"backup/models/xgboost_model_{city_name}.pkl"
-            print(f"Using backup model at {model_path}")
+                
+        elif os.path.exists(backup_path) :
+            print(f"Local model not found. Checking backup at {backup_path}")
+            backup_path = f"backup/models/xgboost_model_{city_name}.pkl"
+            print(f"Using backup model at {backup_path}")
+            model_path = backup_path
+        else :
+            print("no file in backup folder")
 
     # Load the origin i-e current timestamp
     tz = pytz.timezone("Asia/Karachi")

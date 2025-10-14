@@ -6,6 +6,12 @@ import pandas as pd
 import asyncio
 import os
 
+os.environ["HF_HOME"] = "/tmp/.cache"
+os.environ["HF_HUB_CACHE"] = "/tmp/.cache"
+os.environ["TRANSFORMERS_CACHE"] = "/tmp/.cache"
+os.makedirs("/tmp/.cache", exist_ok=True)
+
+
 app = FastAPI()
 
 @app.get("/")
