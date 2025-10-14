@@ -6,6 +6,7 @@ os.environ["STREAMLIT_CACHE_DIR"] = "/tmp/.cache"
 os.environ["STREAMLIT_CONFIG_DIR"] = "/tmp/.streamlit"
 os.makedirs("/tmp/.streamlit", exist_ok=True)
 os.makedirs("/tmp/.cache", exist_ok=True)
+
 from src.air_polution_data_get import get_history_data, get_latest_data,get_cordinates
 import streamlit as st
 import plotly.express as px
@@ -78,31 +79,35 @@ with data_tab:
         view_option_data = st.radio("Select View:", ("Table", "Graph"),key="data_get")
     # Main content area
     with output_col:
+        output_placeholder = st.empty()  
         if st.session_state.data is not None and not isinstance(st.session_state.data, str):
-            if view_option_data == "Table":
-                st.write("Air Quality Table")
-                st.write(st.session_state.data)
-            else:
-                st.write("Air Quality Graph")
-                # Dropdown for selecting which graph to display
-                parameter = st.selectbox("Select a parameter to plot:", ["PM2.5", "PM10", "NO2", "CO", "O3", "SO2", "AQI", "NH3"], key="param_select")
-                fig = px.line(
-                    st.session_state.data, 
-                    x="Timestamp", 
-                    y=parameter,
-                    title=f"{parameter} Over Time",
-                    labels={"Timestamp": "Date & Time", parameter: f"{parameter} Level"},
-                    markers=True
-                )
-                # Customize the layout
-                fig.update_layout(
-                    xaxis_title="Date & Time",
-                    yaxis_title=f"{parameter} Level",
-                    legend_title="Parameter",
-                    hovermode="x unified"
-                )
-                # Display the plot using Streamlit
-                st.plotly_chart(fig, use_container_width=True)
+            if (view_option_data == "Table"):
+                with output_placeholder.container():
+                    st.write("Air Quality Table")
+                    st.write(st.session_state.data)
+            elif view_option_data == "Graph":
+                with output_placeholder.container():
+                    st.write("Air Quality Graph")
+                    parameter = st.selectbox(
+                        "Select a parameter to plot:",
+                        ["PM2.5", "PM10", "NO2", "CO", "O3", "SO2", "AQI", "NH3"],
+                        key="param_select"
+                    )
+                    fig = px.line(
+                        st.session_state.data,
+                        x="Timestamp",
+                        y=parameter,
+                        title=f"{parameter} Over Time",
+                        labels={"Timestamp": "Date & Time", parameter: f"{parameter} Level"},
+                        markers=True
+                    )
+                    fig.update_layout(
+                        xaxis_title="Date & Time",
+                        yaxis_title=f"{parameter} Level",
+                        legend_title="Parameter",
+                        hovermode="x unified"
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
 
 
     with prediction_tab:
@@ -122,25 +127,29 @@ with data_tab:
             view_option_predict = st.radio("Select View:", ("Table", "Graph"),key="predict")
 
             if st.session_state.predictions is not None and not isinstance(st.session_state.predictions, str):
+                output_placeholder2 = st.empty()
                 if view_option_predict == "Table":
-                    st.write("Predicted Values:")
-                    st.write(st.session_state.predictions)
-                else:
-                    st.write("Predicted Values Graph")
-                    fig = px.line(
-                        st.session_state.predictions, 
-                        x="Timestamp", 
-                        y="AQI",
-                        title=f"Predicted AQI Over Time",
-                        labels={"Timestamp": "Date & Time",  "AQI": "AQI Level"},
-                        markers=True
-                    )
-                    # Customize the layout
-                    fig.update_layout(
-                        xaxis_title="Date & Time",
-                        yaxis_title="AQI Level",
-                        legend_title="prediction",
-                        hovermode="x unified"
-                    )
-                    # Display the plot using Streamlit
-                    st.plotly_chart(fig, use_container_width=True)
+                    with output_placeholder2.container():
+                        st.write("Predicted Values")
+                        st.write(st.session_state.predictions)
+                    
+                elif view_option_predict == "Graph":
+                    with output_placeholder2.container():
+                        st.write("Predicted Values Graph")
+                        fig = px.line(
+                            st.session_state.predictions, 
+                            x="Timestamp", 
+                            y="AQI",
+                            title=f"Predicted AQI Over Time",
+                            labels={"Timestamp": "Date & Time",  "AQI": "AQI Level"},
+                            markers=True
+                            )
+                        # Customize the layout
+                        fig.update_layout(
+                            xaxis_title="Date & Time",
+                            yaxis_title="AQI Level",
+                            legend_title="prediction",
+                            hovermode="x unified"
+                        )
+                        # Display the plot using Streamlit
+                        st.plotly_chart(fig, use_container_width=True)

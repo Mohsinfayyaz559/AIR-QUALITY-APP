@@ -1,5 +1,5 @@
 ---
-title: Air Quality Api
+title: Air Quality app
 emoji: 📉
 colorFrom: gray
 colorTo: green
